@@ -1,0 +1,43 @@
+# Lectura de datos
+
+df <- read.csv("atp_2020.csv", header = TRUE)
+head(df)
+
+# Obtenemos el tipo de dato de cada atributo
+
+sapply(df, function(x) class(x))
+
+# Eliminamos atributos con valores null
+
+borrar <- c("winner_seed", "winner_entry", "loser_seed", "loser_entry")
+df <- df[ , !names(df) %in% borrar]
+
+head(df)
+
+# Remplazos NA por la media de su columna
+
+# Declaramos las columnas objetivo
+columnas_remplazo <- c("winner_ht", "loser_ht")
+
+# Calculamos la media de las columnas
+cols_mean <- rep(NA, ncol(df[,c("winner_ht", "loser_ht")]))
+
+cols_mean <- round(cols_mean)
+
+
+cols_mean[columnas_remplazo] <- colMeans(df[, columnas_remplazo], na.rm = TRUE, dims = 1)
+
+# Sustituimos los valores NA por la media de la columna en las columnas objetivo
+for (x in columnas_remplazo){
+  df[is.na(df[,x]), x] <- cols_mean[x]
+}
+
+head(df)
+
+# Redondeamos los valores de las columnas seleccionadas
+
+df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")] <-round(df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")],0)
+
+head(df)
+
+
