@@ -12,6 +12,8 @@ ATP_2020.csv: Dataset en formato CSV proveniente del usuario de GitHub @JeffSack
 
 PRA2_ARS_EMG.pdf: Documento PDF con las respuestas a las preguntas y nombres de los componentes del grupo así como la tabla de contribuciones al trabajo.
 
+Contribuciones: Contiene la tabla de las contribuciones por integrante.
+
 ## Español 
 Limpieza y validación de los datos proporcionados por el usuario @JeffSackmann. Se pretende realizar un análisis de los partidos disputados en el 2020 de la liga ATP.
 
