@@ -1,0 +1,600 @@
+---
+title: 'PRA2: Limpieza y validación de datos'
+author: "Antonio de la Rubia y Enrique Martínez"
+date: "30/05/2021"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    df_print: paged
+    toc: yes
+subtitle: Tipología y ciclo de vida de los datos
+---
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+# 1. Descripción del dataset. ¿Por qué es importante y qué pregunta pretende resolver?
+
+El dataset analizado contiene datos de los partidos de tenis jugados durante la temporada 2020 de la ATP. Está constituido por 49 columnas para 1462 registros. Este dataset es importante porque contiene información tanto de los jugadores como del entorno en el que se desarrolló el partido. Gracias a estos atributos, se pretende clasificar a los jugadores entre vencedores y perdedores en función de las estadísticas obtenidas en los partidos. Además, con este análisis, se pretende determinar la influencia/importancia de algunas de las variables en el resultado del partido.
+
+
+Este tipo de análisis tiene gran relevancia en varios campos. El primero, evidentemente, serían los propios equipos o jugadores de la ATP que podrían analizar dichos datos y generar estrategias para el partido en función del contrincante, la superficie de juego, etc. Por otro lado, también son interesantes para todas aquellas casas de apuestas que basan sus cuotas de partido en función del histórico de partidos.
+
+
+- Tourney_id: Año-ID del torneo (2020-8888)
+- Tourney_name: Nombre del torneo (Atp Cup, Davis Cup)
+- Surface: Superficie de la pista de juego (Hard, Clay, Grass)
+- Draw_size: Número de jugadores del torneo (4, 8, 24)
+- Tourney_level: Nivel del torneo (A, D, F)
+- Tourney_date: año, me sy dia del partido (20200106)
+- Match_num: Numero de partido (1, 2, 3)
+- Winner_seed: cabeza de serie (1, 2, 3, 4)
+- Winner_entry: 
+- Winner_name: Nombre del jugador vencedor (Novak Djokovic, Roberto Bautista, Rafael Nadal)
+- Winner_hand: Mano dominante del jugador vencedor (R, L , U)
+- Winner_ht: Altura del jugador vencedor (188, 190, 183)
+- Winner_ioc: Nacionalidad del jugador vencedor (SRB, ESP, FRA)
+- Winner_age: Edad del jugador vencedor (32’6, 34’7, 27’4)
+- Loser_id: Identificador del jugador perdedor (104925, 105138)
+- Loser_seed: cabeza de serie (1, 2, 3, 4)
+- Loser_entry: 
+- Loser_name: Nombre del jugador perdedor (Novak Djokovic, Roberto Bautista, Rafael Nadal)
+- Loser_hand: Mano dominante del jugador perdedor (R, L , U)
+- Loser_ht: Altura del jugador perdedor (188, 190, 183)
+- Loser_ioc: Nacionalidad del jugador perdedor (SRB, ESP, FRA)
+- Loser_age: Edad del jugador perdedor (32’6, 34’7, 27’4)
+- Score: Puntuación final del partido
+- Best_of: Número de sets del partido (3, 5)
+- Round: Ronda del torneo (F, SF, QF)
+- Minutes: Duración del partido en minutos
+- l_ace: Número de Ace’s del jugador perdedor
+- l_df: Número de dobles faltas del jugador perdedor
+- l_svpt: Número de puntos de servicio del jugador perdedor
+- l_1stIn: Número de primeros servicios dentro de la pista del jugador perdedor
+- l_1stWon: Número de puntos por primer servicio del jugador perdedor
+- l_2ndWon: Número de puntos por segundo servicio del jugador perdedor
+- l_svgms: Número de juegos de servicio del jugador perdedor
+- l_bpSaved: Número de puntos de break salvados del jugador perdedor
+- l_bpFaced: Número de puntos de break enfrentados del jugador perdedor
+- Winner_rank: Ranking del jugador vencedor
+- Winner_rank_points: Puntos de ranking del jugador vencedor
+- Loser_rank: Ranking del jugador perdedor
+- Loser_rank_points: Puntos de ranking del jugador perdedor
+
+# 2. Integración y selección de los datos de interés a analizar
+
+En este caso, hemos optado por obtener los datos del GitHub del usuario @JeffSackmann. Este, dispone de un conjunto de datasets, de los cuales utilizaremos uno. El dataset seleccionado corresponde a los partidos jugados por los jugadores de la ATP durante el año 2020. En el siguiente enlace podemos encontrar el proyecto GitHub original.
+
+
+https://github.com/JeffSackmann/tennis_atp/blob/master/atp_matches_2020.csv
+
+
+En primer lugar, descargamos el fichero csv y lo pasamos a tabla Excel para una primera revisión manual.
+
+
+Gracias a esta primera revisión, observamos que existen varias columnas con valores null para un gran número de registros. Estas columnas son:
+
+
+Winner_seed, Winner_entry, Loser_seed y Loser_entry
+
+
+Tras evaluar el contenido de dichos atributos, consideramos que podemos descartarlas del análisis que deseamos realizar.
+
+
+Por otro lado, encontramos valores vacíos en algunos de los registros de las columnas winner_ht y looser_ht. En el siguiente apartado consideraremos como proceder con dichos registros.
+
+# 3. Limpieza de los datos
+
+En primer lugar, debemos realizar la lectura del fichero CSV. En este caso, utilizaremos el IDE RStudio para el análisis, por lo que deberemos hacer uso de la función read.csv que nos permite leer un fichero de texto plano separado por comas. El resultado de la función lo almacenaremos en el objeto dataframe ‘df’.
+
+```{r}
+
+#setwd("D:\UOC\Tipología y ciclo de vida de los datos\Prac2\PRACT2")
+
+# Lectura de datos
+
+df <- read.csv("atp_2020.csv", header = TRUE, na.strings=c("","NA"))
+head(df)
+
+```
+
+Para obtener el tipo de datos que almacena cada variable, utilizaremos la función sapply().
+
+```{r}
+# Obtenemos el tipo de dato de cada atributo
+
+sapply(df, function(x) class(x))
+
+```
+
+## 3.1 ¿Los datos contienen ceros o elementos vacíos?¿Cómo gestionarías cada uno de estos casos?
+
+
+Como hemos visto anteriormente, encontramos 4 variables con datos nulos para muchos de los registros. Como para el tipo de análisis que vamos a realizar, no nos interesan esas variables, procedemos a descartarlas del dataframe. Para ello, generamos un vector con los nombres de las variables que queremos eliminar y lo pasamos al dataframe. De esta manera, se descartan del dataframe las columnas con nombres coincidentes a los definidos en el vector ‘borrar’
+
+```{r}
+# Eliminamos atributos con valores null
+
+borrar <- c("winner_seed", "winner_entry", "loser_seed", "loser_entry")
+df <- df[ , !names(df) %in% borrar]
+
+head(df)
+
+```
+
+En cuanto a los campos de winner_ht y loser_ht que representan la altura de los jugadores, hemos optado por sustituir los valores nulos por la media de altura de los registros. 
+
+
+Para ello, declaramos un vector con los nombres de las columnas que deseamos modificar. A continuación, calculamos la media de dichas columnas e iteramos sobre el dataframe modificando los valores NA de las columnas declaradas por la media de dichas columnas.
+
+
+Observamos que los valores previamente marcados como NA se ven modificados por la media de la columna.
+
+```{r}
+# Remplazos NA
+
+# Declaramos las columnas cualitativas objetivo
+columnas_remplazo <- colnames(df)[c(11, 13, 17, 19, 24:41)]
+
+# Calculamos la media de las columnas cualitativas
+cols_mean <- rep(NA, ncol(df[,colnames(df)[c(11, 13, 17, 19, 24:41)]]))
+
+# Redondeo de las columnas
+cols_mean <- round(cols_mean)
+
+cols_mean[columnas_remplazo] <- colMeans(df[, columnas_remplazo], na.rm = TRUE, dims = 1)
+
+# Sustituimos los valores NA por la media de la columna en las columnas objetivo
+for (x in columnas_remplazo){
+  df[is.na(df[,x]), x] <- cols_mean[x]
+}
+head(df)
+```
+
+En cuanto a la variable "looser_hand", observamos que existen varios valores marcados como NA. En primer lugar, obtenemos la frecuencia de cada uno de los posibles valores tanto para la variable "looser_hand" como para "winner_hand". A continuación, una vez confirmados que los valores NA solo aparecen en la variable que hace referencia a la mano dominante del jugador perdedor, procedemos a sustituir todos aquellos valores marcados como NA por la moda obtenida previamente. En este caso, la moda de la variable "looser_hand" es 'R'.
+
+```{r}
+# Evaluamos la frecuencia de mano dominante sobre los jugadores
+table(df$winner_hand, useNA="always")
+
+table(df$loser_hand, useNA="always")
+
+# Sustituimos los valores NA por la moda de la columna, en este caso 'R'
+
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+df[is.na(df$loser_hand), "loser_hand"] <- getmode(df$loser_hand)
+
+# Comprobamos que se han sustituido los valores correctamente
+
+table(df$loser_hand, useNA="always")
+
+head(df)
+```
+
+Para finalizar, redondeamos aquellas columnas que sean necesarias. En nuestro caso, redondeamos las columnas que hacen referencia a la altura y a la edad de los jugadores.
+
+
+Redondeamos los valores de las columnas seleccionadas
+
+```{r}
+df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")] <-
+  round(df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")],0)
+
+head(df)
+```
+
+## 3.2 Identificación y tratamiento de valores extremos
+
+En este apartado se pretenden identificar los valores extremos o outliers. Los outliers son aquellos que parecen ser erróneos al compararlos con el resto de los datos. En este caso, se ha decidido por utilizar la función boxplot.stats() proporcionada por R para realizar el análisis de los valores extremos.
+
+```{r}
+# Redondeamos los valores de las columnas seleccionadas
+
+df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")] <- 
+  round(df[,c("winner_ht", "winner_age", "loser_ht", "loser_age")],0)
+
+head(df)
+
+# Gestión de los valores extremos para algunas de las variables
+
+# Minutos jugados
+boxplot(df$minutes)$out
+
+# Numero w_Ace
+boxplot(df$w_ace)$out
+
+# Numero w_svpt
+boxplot(df$w_svpt)$out
+
+# Numero w_1stIn
+boxplot(df$w_1stIn)$out
+
+# Numero w_1stWon
+boxplot(df$w_1stWon)$out
+
+# Numero w_2ndWon
+boxplot(df$w_2ndWon)$out
+
+# Numero l_Ace
+boxplot(df$l_ace)$out
+
+# Numero l_svpt
+boxplot(df$l_svpt)$out
+
+# Numero l_1stIn
+boxplot(df$l_1stIn)$out
+
+# Numero l_1stWon
+boxplot(df$l_1stWon)$out
+
+# Numero l_2ndWon
+boxplot(df$l_2ndWon)$out
+
+
+```
+
+Tras el análisis de los resultados obtenidos con la función boxplot.stats(), comparando entre los valores obtenidos para los vencedores y perdedores así como para otras temporadas, concluimos que los valores son posibles.
+
+
+En el caso de la duración del partido, el reglamento en tenis no establece una duración máxima del encuentro. De hecho, se han dado situaciones en las que el partido se ha disputado en varios días por lo que entendemos que los valores contenidos en el dataset son correctos.
+
+
+En relación a las métricas del partido, se han analizado los casos en cuestión y se ha determinado que los datos representados son plausibles.
+
+
+En conclusión, podemos considerar que los valores marcados como outliers no son tal y que por tanto no necesitan de tratamiento alguno y serán contabilizados en los análisis posteriores.
+
+# 4. Análisis de los datos.
+
+
+En el presente apartado, llevaremos a cabo el análisis de los datos contenidos en el dataset, ajustado por los cambios mencionados en los anteriores apartados.
+
+
+## 4.1. Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar).
+
+
+En este apartado vamos a crear grupos de datos que posteriormente utilizaremos en nuestro análisis.
+
+```{r}
+library(dplyr)
+# Creamos un dataframe con todos los jugadores que 
+# han disputado algún partido de los torneos de 2020. 
+jugadores <- df[,8:13]
+colnames(jugadores) <- c("id", "name", "hand", "height", "country", "age")
+todos_jugadores <- jugadores
+jugadores <- df[,14:19]
+colnames(jugadores) <- c("id", "name", "hand", "height", "country", "age")
+todos_jugadores <- rbind(todos_jugadores, jugadores)
+rm(jugadores)
+todos_jugadores <- distinct(todos_jugadores, id, .keep_all = TRUE)
+
+# Adicionalmente, creamos nuevos campos con las principales 
+# estadisticas de juego.
+win <- rep(0, nrow(todos_jugadores))
+lose <- win
+aces <- win
+d_faults <- win
+svpt <- win
+first_in <- win
+first_won <- win
+second_won <- win
+svgms <- win
+bp_faced <- win
+
+for (i in 1:nrow(todos_jugadores)){
+  for (j in 1:nrow(df)){
+    if (todos_jugadores$id[i]==df$winner_id[j]){
+      win[i] <- win[i]+1
+      aces[i] <- aces[i] + df$w_ace[j]
+      d_faults[i] <- d_faults[i] + df$w_df[j]
+      svpt[i] <- svpt[i] + df$w_svpt[j]
+      first_in[i] <- first_in[i] + df$w_1stIn[j]
+      first_won[i] <- first_won[i] + df$w_1stWon[j]
+      second_won[i] <- second_won[i] + df$w_2ndWon[j]
+      svgms[i] <- svgms[i] + df$w_SvGms[j]
+      bp_faced[i] <- bp_faced[i] + df$w_bpFaced[j]
+    } else if (todos_jugadores$id[i]==df$loser_id[j]){
+      lose[i] <- lose[i]+1
+      aces[i] <- aces[i] + df$l_ace[j]
+      d_faults[i] <- d_faults[i] + df$l_df[j]
+      svpt[i] <- svpt[i] + df$l_svpt[j]
+      first_in[i] <- first_in[i] + df$l_1stIn[j]
+      first_won[i] <- first_won[i] + df$l_1stWon[j]
+      second_won[i] <- second_won[i] + df$l_2ndWon[j]
+      svgms[i] <- svgms[i] + df$l_SvGms[j]
+      bp_faced[i] <- bp_faced[i] + df$l_bpFaced[j]
+    }
+  }
+}
+# Creamos la variables victorias netas por partido jugado.
+net_wins <- (win-lose)/(win+lose)
+
+# Calculamos todas las variables en función de los partidos 
+# disputados por cada jugador.
+aces <- aces/(win+lose)
+d_faults <- d_faults/(win+lose)
+svpt <- svpt/(win+lose)
+first_in <- first_in/(win+lose)
+first_won <- first_won/(win+lose)
+second_won <- second_won/(win+lose)
+svgms <- svgms/(win+lose)
+bp_faced <- bp_faced/(win+lose)
+
+# Integramos las nuevas variables a nuestro dataframe.
+nuevos_campos <- cbind(win, lose, net_wins,
+                       aces, d_faults, svpt,
+                       first_in, first_won, 
+                       second_won, svgms,
+                       bp_faced)
+
+todos_jugadores <- cbind(todos_jugadores, nuevos_campos)
+
+# NOTA: Omitimos la variable de break points salvados ya que vemos que está incluida
+# su relación con las victorias a través de los break point enfrentados.
+
+
+# Agrupamos entre jugadores diestros, zurdos y ambidiestro.
+todos_jugadores_dcha <- todos_jugadores[todos_jugadores$hand=="R",]
+todos_jugadores_izq <- todos_jugadores[todos_jugadores$hand=="L",]
+todos_jugadores_amb <- todos_jugadores[todos_jugadores$hand=="U",]
+
+```
+
+## 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
+
+
+Con el fin de comprobar que los valores de las variables cuantitativas de nuestro dataset provienen de una población distribuida de manera normal, vamos a aplicar a nuestro caso la prueba de normalidad de **Anderson-Darling**.
+
+
+De esta forma, comprobamos que para cada una de las pruebas que ralizamos se obtiene un p-valor superior al nivel de significación prefijado en $\alpha$ = 0.05. Si esto se cumple, entonces consideraremos que la variable cuantitativa en cuestión sigue una distribución normal.
+
+```{r}
+library(nortest)
+alpha = 0.05
+nombre_col = colnames(todos_jugadores)
+for (i in 1:ncol(todos_jugadores)) {
+  if (i == 1) cat("Las variables que NO siguen una distribución normal son las siguientes:\n")
+  if (is.integer(todos_jugadores[,i]) | is.numeric(todos_jugadores[,i])) {
+    p_val = ad.test(todos_jugadores[,i])$p.value
+    if (p_val < alpha) {
+      cat(nombre_col[i])
+      # Format output
+      if (i <= ncol(todos_jugadores) - 1) cat(", ")
+    }
+  }
+}
+```
+
+Vemos que ninguna de las variables cuantitativas sigue esta distribución.
+
+
+A continuación, vamos a comprobar la homogeneidad de varianzas a través de la aplicación del test de **Fligner-Killeen**. En este caso, estudiaremos esta homogeneidad en cuanto a los grupos conformados por jugadores diestros y zurdos. En este test, la hipótesis nula se basa en afirmar que ambas varianzas son iguales.
+
+```{r}
+fligner.test(net_wins ~ hand, data = todos_jugadores)
+```
+
+En conclusión, dado que obtenemos un p-valor superior a 0.05, debemos aceptamos la hipótesis de que las varianzas de ambas muestras son homogéneas. En el caso siguiente (nacionalidad), dado que el p-valor es inferior (aunque próximo), rechazaríamos la hipótesis de que las varianzas son homogéneas.
+
+```{r}
+fligner.test(net_wins ~ country, data = todos_jugadores)
+```
+
+## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+
+
+### 4.3.1. Correlación.
+
+La primera prueba estadística que vamos a realizar es la comprobación de la **correlación** que existe entre las caracteristicas de los jugadores con el número de victorias netas para saber cuales de ellas pueden afectan más a esta variable. Dado que hemos visto que nuestras variables no son normales, utilizamos el test de Spearman para obtener las correlaciones.
+
+Como matriz de correlaciones podemos ejecutar la siguiente función:
+
+```{r}
+cor(todos_jugadores[,c(4,6,9:ncol(todos_jugadores))], method = "spearman")
+```
+
+Podemos ver la relación entre las principales variables que afectan a las victorias netas y su p-valor (puesto que este puede dar información acerca del peso estadístico de la correlación obtenida):
+
+```{r}
+cor.test(todos_jugadores$net_wins, todos_jugadores$bp_faced, 
+         method = "spearman", exact = FALSE)
+cor.test(todos_jugadores$net_wins, todos_jugadores$height, 
+         method = "spearman", exact = FALSE)
+cor.test(todos_jugadores$net_wins, todos_jugadores$first_won, 
+         method = "spearman", exact = FALSE)
+cor.test(todos_jugadores$net_wins, todos_jugadores$aces, 
+         method = "spearman", exact = FALSE)
+```
+
+Aunque no podemos decir que exista una correlación muy fuerte entre las variables analizadas y el número de victorias, sí que destacamos cinco que afectan por encima de las demás: el número de break points en contra (relación inversa), la altura, el número de puntos ganados con el primer servicio y el número de saques directos.
+
+
+### 4.3.2. Regresión lineal.
+
+
+A través de un modelo de regresión lineal se puede comprobar el efecto que tiene sobre las victorias de un jugador cada una de las variables que afectan a su juego: altura, edad, aces... De esta forma, se podría incluso prever las victorias de un tenista dada una serie de caracteristicas. Para desarrollar este apartado, plantearemos varios modelos de regresión lineal y posteriormente analizaremos su bondad del ajuste para quedarnos con el que mayor bondad tenga (R cuadrado).
+
+
+Para definir los modelos solamente utilizaremos las variables cuantitativas que más correlación presentan y todas las cualitativas.
+
+```{r}
+modelo1 <- lm(net_wins ~ height + age + aces 
+              + first_won + second_won + bp_faced, 
+              data = todos_jugadores)
+
+modelo2 <- lm(net_wins ~ height + age + aces 
+              + hand + country + first_won + second_won + bp_faced, 
+              data = todos_jugadores)
+
+modelo3 <- lm(net_wins ~ height + age + aces 
+              + first_won + bp_faced, 
+              data = todos_jugadores)
+
+modelo4 <- lm(net_wins ~ height + age + hand 
+              + country + first_won + second_won, 
+              data = todos_jugadores)
+
+modelo5 <- lm(net_wins ~ height + age + aces 
+              + hand + country, 
+              data = todos_jugadores)
+
+modelo6 <- lm(net_wins ~ height + age + aces 
+              + first_won + second_won, 
+              data = todos_jugadores)
+```
+
+Desarrollados los anteriores modelos, vamos a analizar la bondad del ajuste de los mismos para así compararlos.
+
+```{r}
+
+tabla.coeficientes <- matrix(c(1, summary(modelo1)$r.squared, 
+                               2, summary(modelo2)$r.squared, 
+                               3, summary(modelo3)$r.squared, 
+                               4, summary(modelo4)$r.squared, 
+                               5, summary(modelo5)$r.squared,
+                               6, summary(modelo6)$r.squared), 
+                             ncol = 2, byrow = TRUE)
+
+colnames(tabla.coeficientes) <- c("Modelo", "R^2")
+tabla.coeficientes
+```
+
+Podemos concluir que el segundo modelo es el más conveniente dado que tiene una mayor bondad del ajuste, un mayor coeficiente de determinación (R cuadrado). A continuación, vamos a aplicar este modelo para comprobar como nos serviría para predecir las victorias de un jugador, dadas unas determinadas características.
+
+```{r}
+prediccion1 <- data.frame(height = 188,
+                         age =  33,
+                         aces = 6,
+                         hand = "R",
+                         country = "SRB", 
+                         first_won = 37,
+                         second_won = 14, 
+                         bp_faced = 5
+)
+
+prediccion2 <- data.frame(height = 199,
+                         age = 22,
+                         aces = 15,
+                         hand = "L",
+                         country = "ESP", 
+                         first_won = 50,
+                         second_won = 30, 
+                         bp_faced = 5
+)
+
+predict(modelo2, prediccion1)
+predict(modelo2, prediccion2)
+```
+
+### 4.3.3. Contraste de hipótesis.
+
+
+Como tercera prueba estadística, vamos a llevar a cabo un contraste de hipótesis para responder a la pregunta de si ser zurdo aumenta el número de victorias netas de un jugador (recordemos que se suele decir que es más dificil, siendo diestro jugar contra un jugador zurdo, siendo mayoria los primeros). 
+
+
+Para llevar a cabo el contraste, definiremos dos muestras: en la primera incluiremos las victorias netas de los jugadores zurdos y en la segunda las victorias netas de los jugadores diestros
+
+
+Debemos aclarar que para este test paramétrico, dado que las muestras son superiores a 30, no es necesario que los datos sean normales. Por esa razón, podemos confirmar que el siguiente contraste de hipótesis es correcto.
+
+```{r}
+vic_jug_zurdos <- todos_jugadores$net_wins[todos_jugadores$hand=="L"]
+vic_jug_diestros <- todos_jugadores$net_wins[todos_jugadores$hand=="R"]
+```
+
+Realizada la anteriore agrupación, planteamos el siguiente contraste de hipótesis, nula y alternativa, de dos muestras sobre la diferencia de medias. Este contrate es unilateral dada la formulación de la hipótesis alternativa:
+
+$$
+\left\{
+\begin{array}{ll}
+H_{0}: &  \mu_1-\mu_2=0\\
+H_{1}: & \mu_1-\mu_2<0\\
+\end{array}
+\right.
+$$
+
+; donde $\mu_1$ es la media de la población de la que se extrae la primera muestra y $\mu_2$ es la media de la población de la que extrae la segunda. Así, tomaremos $\alpha$ = 0.05.
+
+
+
+```{r}
+t.test(vic_jug_diestros, vic_jug_zurdos, alternative = "less")
+```
+
+Como vemos, obtenemos un p-valor superior al valor de significación fijado. Por esa razón, no podemos rechazar la hipótesis nula ni concluir que el hecho de ser zurdo, te haga ganar más partidos.
+
+
+# 5. Representación de los resultados a partir de tablas y gráficas.
+
+
+A continuación, a modo de resumen, se presentan una serie de gráficas con información sobre la relación entre las principales variables y las victorias netas:
+
+```{r}
+library("ggpubr")
+# Gráfico de la relación entre los break points en contra 
+# y el número de victorias netas en el año.
+ggscatter(todos_jugadores, x = "net_wins", y = "bp_faced", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Victorias netas", 
+          ylab = "Break points en contra por partido")
+
+# Gráfico de la relación entre la altura 
+# y el número de victorias netas en el año.
+ggscatter(todos_jugadores, x = "net_wins", y = "height", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Victorias netas", ylab = "Altura")
+
+# Gráfico de la relación entre los puntos ganados con el primer saque 
+# y el número de victorias netas en el año.
+ggscatter(todos_jugadores, x = "net_wins", y = "first_won", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Victorias netas", 
+          ylab = "Puntos ganados con el primer saque por partido")
+
+# Gráfico de la relación entre el número de saques directos 
+# y el número de victorias netas en el año.
+ggscatter(todos_jugadores, x = "net_wins", y = "aces", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Victorias netas", ylab = "Saques directos por partido")
+
+# Gráfico de la relación entre la edad 
+# y el número de victorias netas en el año.
+ggscatter(todos_jugadores, x = "net_wins", y = "age", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Victorias netas", ylab = "Edad")
+
+# Gráfico de la relación entre la mano hábil 
+#y el número de victorias netas en el año.
+boxplot(todos_jugadores$net_wins ~ todos_jugadores$hand, 
+        xlab = "Mano hábil", ylab = "Victorias netas")
+
+
+```
+
+# 6. Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
+
+El objetivo de nuestro análisis era intentar responder a la pregunta de qué características de un jugador hacen que este gane más o menos partidos y, a la larga, consiga más títulos. A partir de datos de la temporada 2020, que incluyen estadísticas propias de los jugadores como su altura, nacionalidad o edad, así como otras puramente técnicas como el número de aces, el número de puntos ganados con el primer servicio o los break points a favor y en contra, hemos desarrollado una serie de pruebas para ver como estas variables se relacionan con el número de victorias netas de un jugador (entendido como victorias menos derrotas).
+
+
+En primer lugar, se ha llevado a cabo una limpieza de los datos a través de la eliminación de valores nulos y la sustitutición de los valores NA. Seguidamente, se ha llevado a cabo un análisis y gestión de los valores extremos de las principales variables cuantitativas.
+
+
+A continuación, se ha procedido a la creación de un nuevo dataframe, a partir del original, en el que se han desplegado las principales variables por cada uno de los tenistas que han jugado algún partido en la temporada 2020. Por último, se han llevado a cabo una serie de análisis estadísticos para intentar explicar las causas que explican el número de victorias de un tenista. 
+
+
+De todas las variables a nuestro alcance, han destacado cinco por encima de las demás: los puntos de break en contra por partido (inversamente), la altura, el número de puntos ganados con el primer saque por partido y los saques directos por partido. Pordemos ver como algunos componentes como la edad (inversamente) afecta menos de lo que comunmente se piensa. Esto seguramente tiene que ver con varios "viejos" outliers en el mundo del tenis (Djokovic, Federer, Nadal...). 
+
+La principal conclusión que podemos obtener del análisis es que, si bien estas variables en su conjunto afectan de una u otra manera al rendimiento de un tenista, lo que es innegable es que hay un componente llamado talento que no puede recoger ninguna prueba estadística.
